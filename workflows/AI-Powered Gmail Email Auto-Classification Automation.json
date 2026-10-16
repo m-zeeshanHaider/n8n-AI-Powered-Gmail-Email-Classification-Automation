@@ -1,0 +1,291 @@
+{
+  "name": "AI-Powered Gmail Email Auto-Classification Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "7500a8f5-6903-421d-92f4-33d361016faf",
+      "name": "Aggregate Gmail Messages",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        1472,
+        448
+      ],
+      "typeVersion": 1,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "f8a55cde-9bc5-4719-8484-5618f45eb243",
+      "name": "Merge Labels & Messages",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        2144,
+        624
+      ],
+      "typeVersion": 3.1,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful, intelligent email classification assistant.Your sole purpose is to accurately categorize Gmail email snippets into a single, most appropriate label.\n\nAvailable Labels: \n-> 🗣️ Reply Needed :\n- Direct questions from a colleague, client, or contact requiring your personal answer.\n- Personal conversation threads where your input is explicitly expected.\n- Excludes automated messages, even if they are phrased as questions (e.g., \"How was your experience?\").\n\n-> ⚠️ Action Required :\n- Alerts that a payment method failed and needs updating.\n- Requests to authorize a transaction or verify your identity.\n- System prompts indicating an action is needed to complete a process (e.g., \"Top up your balance to avoid service interruption\").\n- Notifications about restricted access or account issues that you must resolve.\n\n-> 💬 Review & Feedback :\n- Requests to provide comments on a specific document, design, or proposal.\n- Emails with a shared link asking for your professional opinion or approval.\n- Collaborative platform notifications prompting you to review a teammate's work.\n\n-> 🤖 System Updates :\n- All automated receipts for transactions (purchases, refunds, subscriptions).\n- Login or security alerts from services you use (e.g., \"New sign-in on a new device\").\n- Automated tracking updates for packages (shipped, out for delivery, delivered).\n- System-generated alerts for monitored events (e.g., server downtime, code deployment success/failure).\n\n-> 📅 Calendar & Meetings :\n- New calendar invitations.\n- Updates to existing meeting times, dates, or locations.\n- Cancellation notices for scheduled meetings.\n- Automated summaries from calendar or meeting apps (e.g., \"Your upcoming week\").\n\n-> ⏳ Waiting For Others :\n- Follow-up emails from someone checking on a response you haven't sent yet (e.g., \"Just following up on my previous email\").\n- Reminders about an unanswered request sent to you. - Threads where the ball is in your court and another party is acknowledging that.\n\n-> ✅ Done & Confirmed :\n- Confirmation emails for actions you manually initiated, such as a support ticket you submitted, a manual transfer you authorized, or a cancellation request you processed.\n- Excludes automated system actions (e.g., a monthly subscription charge).\n\n-> 📢 Promotions & News :\n- Newsletters from companies or blogs.\n- Promotional offers, discounts, and sales announcements.\n- Product update announcements and feature launch emails.\n- All automated feedback requests and customer satisfaction surveys.\n\n-> 📁 Miscellaneous :\n- Any email that does not clearly fit into one of the other categories.\n- General company-wide announcements that are not promotional.\n- Non-urgent, informational broadcasts from internal systems or groups.    \n\nRules:\n- Read the email snippet and note the sender for context.\n- Classify it into only one label based on the definitions above.\n- Respond with nothing but the exact label name (e.g., \"📢 Promotions & News\").\n- Do not include any other text, explanation, or the email content itself.\n\nEmail From:\n{{ $json.From }}\nEmail To:\n{{ $json.To }}\nEmail subject:\n{{ $json.Subject }}\nEmail snippet:\n{{ $json.snippet }}",
+        "batching": {}
+      },
+      "id": "053c9e1b-20b7-48f2-a5c6-a5b96c2c5e08",
+      "name": "Classify Email with AI",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        2368,
+        624
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "95f752f8-d169-4664-8905-55fc398a34fa",
+      "name": "New Gmail Email Received",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        1248,
+        640
+      ],
+      "typeVersion": 1.2,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yXNew9CtXecgo4p7",
+          "name": "Dev _ Sasha Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "returnAll": true
+      },
+      "id": "7ea6264b-e2b1-4af9-bbe0-cb99735bf4a3",
+      "name": "Fetch Available Gmail Labels",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1696,
+        448
+      ],
+      "webhookId": "8574ca24-b439-4bc3-aa28-ae2b539a8d8e",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yXNew9CtXecgo4p7",
+          "name": "Dev _ Sasha Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst combinedObject = items.reduce((acc, item) => {\n  return { ...acc, [item.json.name]: item.json.id };\n}, {});\n\nreturn { combinedObject };\n"
+      },
+      "id": "af39b456-40f2-491a-87a0-ce854c61c9fc",
+      "name": "Map Label Names to IDs",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1920,
+        448
+      ],
+      "typeVersion": 2,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Merge Labels & Messages').item.json.id }}",
+        "labelIds": "={{ $(\"Map Label Names to IDs\").item.json.combinedObject[$json.text] }}"
+      },
+      "id": "fff192ad-9539-4e3e-851e-f08745c6c5fd",
+      "name": "Apply Classification Label",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2720,
+        624
+      ],
+      "webhookId": "2ffe45e7-a0e3-4304-a6bf-e217c15ea6cc",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yXNew9CtXecgo4p7",
+          "name": "Dev _ Sasha Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# 📧 **AI Email Classification Workflow Overview**\n\nThis workflow automatically labels incoming Gmail emails using AI. It categorizes each new email into a specific, predefined label based on its content and context.\n\n---\n\n### 🔗 **Node Connections & Flow**\n\n**1. New Gmail Email Received (Trigger)**\n*   **Purpose:** The workflow's entry point. It activates whenever a new email arrives in the connected Gmail inbox.\n*   **Output:** Emits data for the new email, including its ID, subject, snippet, and sender information.\n\n**2. Aggregate Gmail Messages (Aggregate)**\n*   **Purpose:** Ensures the trigger node's output is passed correctly as a single input batch to the next node.\n*   **Output:** A consolidated stream of the email data.\n\n**3. Fetch Available Gmail Labels (Gmail Node)**\n*   **Purpose:** Makes an API call to Gmail to retrieve a list of all existing labels in the mailbox, including their names and unique Gmail IDs.\n*   **Output:** A list of label objects (e.g., `{ \"id\": \"Label_123\", \"name\": \"🗣️ Reply Needed\" }`).\n\n**4. Map Label Names to IDs (Code Node)**\n*   **Purpose:** Processes the list of labels. It runs a JavaScript snippet to convert the array of label objects into a simple key-value object where the key is the label name and the value is its ID.\n*   **Output:** A single object (e.g., `{ \"🗣️ Reply Needed\": \"Label_123\", \"⚠️ Action Required\": \"Label_456\", ... }`). This is crucial for looking up the ID later based on the AI's text response.\n\n**5. Merge Labels & Messages (Merge Node)**\n*   **Purpose:** Combines two data streams: the original email data from the trigger and the mapped label object from the Code node. It uses the \"Combine All\" mode to pair each email with the complete label map.\n*   **Output:** A single item containing both the email data and the label mapping object, ready for the AI.\n\n**6. Classify Email with AI (Chain Node)**\n*   **Purpose:** The core logic unit. It sends a carefully crafted prompt containing the email's metadata (From, Subject, Snippet) and the detailed classification rules to the language model.\n*   **System Prompt:** Instructs the AI to act as an email classifier, providing precise definitions for each label category and strict rules to output only the exact label name.\n*   **Output:** The AI's response, which should be the exact text of the chosen label (e.g., `\"⚠️ Action Required\"`).\n\n**7. OpenAI Chat Model (Language Model)**\n*   **Purpose:** Provides the AI \"brain\" for classification. This model interprets the prompt and email data to make an intelligent categorization decision.\n*   **Connection:** Injected into the \"Classify Email with AI\" node to power its reasoning.\n\n**8. Apply Classification Label (Gmail Node)**\n*   **Purpose:** The final action. It uses the Gmail API to add a label to the original email.\n*   **How it works:**\n    *   `messageId`: Taken from the original email data passed through the merge node.\n    *   `labelIds`: A dynamic expression that looks up the ID in the pre-mapped label object using the AI's text response (`$json.text`) as the key.\n*   **Result:** The incoming email is automatically tagged with the AI-selected label, organizing the inbox.\n\n---\n\n### ⚙️ **How It Works (Step-by-Step)**\n1.  A new email arrives in Gmail.\n2.  The trigger node detects it and activates the workflow.\n3.  Two parallel processes start:\n    *   **Path A:** The email data is aggregated and prepared.\n    *   **Path B:** The workflow fetches all current Gmail labels and processes them into a simple lookup map.\n4.  The email data and the label map are merged into a single data structure.\n5.  This merged data is sent to the AI node, which crafts a prompt for the language model.\n6.  The language model analyzes the email content against the rules and returns a single label name.\n7.  The \"Apply Label\" node uses this label name to find the corresponding Gmail ID from the map and applies it to the original email.\n8.  The email is now automatically sorted.",
+        "height": 1376,
+        "width": 736,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "90fdf343-9a91-417d-b2da-886421dd46a5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        864
+      ],
+      "id": "0ffed403-88eb-4969-80ba-90b3c91c9b40",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "oaOoORThgJG8STJp",
+          "name": "Dev _ Sasha Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Aggregate Gmail Messages": {
+      "main": [
+        [
+          {
+            "node": "Fetch Available Gmail Labels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Labels & Messages": {
+      "main": [
+        [
+          {
+            "node": "Classify Email with AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Email with AI": {
+      "main": [
+        [
+          {
+            "node": "Apply Classification Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Gmail Email Received": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Gmail Messages",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Labels & Messages",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Available Gmail Labels": {
+      "main": [
+        [
+          {
+            "node": "Map Label Names to IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Label Names to IDs": {
+      "main": [
+        [
+          {
+            "node": "Merge Labels & Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Classify Email with AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Vsyj4lPuDw5RGiAq",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "70f795b6-cef4-47e2-8025-58fb12dbf104",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5c585f2620b1e811fa88e890c331ab057400f88adebd1d8bd64feeac19ecaec8"
+  },
+  "nodeGroups": [],
+  "id": "fqq03QpOOSlRaZ2k",
+  "tags": [
+    {
+      "updatedAt": "2026-08-07T10:30:45.435Z",
+      "createdAt": "2026-05-16T12:55:37.724Z",
+      "id": "uSNTXipxQbvF4Txs",
+      "name": "Main Workflow"
+    }
+  ]
+}
