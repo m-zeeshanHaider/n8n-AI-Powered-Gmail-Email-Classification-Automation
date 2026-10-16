@@ -2,11 +2,13 @@
 
 This automation polls a Gmail inbox for new emails and uses a Google Gemini chat model to assign each one a single label. It then applies that label to the email in Gmail.
 
+![Illustration of an envelope with a megaphone above the n8n logo on a pink background](images/thumbnail.png)
+
 ## Overview
 
 Incoming email needs sorting by what it asks of the recipient, such as a reply, an action, or a review. The system uses one workflow. A Gmail trigger detects each new email, and a second branch loads the mailbox labels into a name-to-ID lookup. The email and the lookup are merged, passed to an AI classification node, and the returned label name selects the label to apply.
 
-![Illustration of an envelope with a megaphone above the n8n logo on a pink background](images/thumbnail.png)
+![n8n canvas showing the Gmail trigger splitting into two branches that rejoin at a merge node, followed by an AI classification node with a chat model attached and a final Gmail node that applies the label](images/AI-Powered-Gmail-Email-Classification-Automation-1.png)
 
 ## Workflows
 
@@ -21,8 +23,6 @@ Incoming email needs sorting by what it asks of the recipient, such as a reply, 
 This workflow labels each new Gmail email with one of nine categories chosen by an AI model.
 
 **Trigger:** The Gmail Trigger node, named New Gmail Email Received, polls the connected Gmail account every minute for new emails.
-
-![n8n canvas showing the Gmail trigger splitting into two branches that rejoin at a merge node, followed by an AI classification node with a chat model attached and a final Gmail node that applies the label](images/AI-Powered-Gmail-Email-Classification-Automation-1.png)
 
 Execution steps:
 
